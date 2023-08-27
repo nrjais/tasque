@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libsql = { version = "0.1.6", features = ["replication"] }
+anyhow = "1.0.75"
 openraft = "0.8.3"
+sled = { version = "0.34.7", features = ["compression"] }
+uuid = { version = "1.4.1", features = ["v7", "std"] }
