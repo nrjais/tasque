@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
+bincode = "1.3.3"
 openraft = "0.8.3"
+serde = { version = "1.0.188", features = ["derive"] }
 sled = { version = "0.34.7", features = ["compression"] }
-uuid = { version = "1.4.1", features = ["v7", "std"] }
+uuid = { version = "1.4.1", features = ["v7", "std", "serde"] }
