@@ -1,3 +1,5 @@
+use tasque::IdxStorage;
+
 fn main() {
-  let _ = tasque::Storage::new();
+  let _ = IdxStorage::<bool>::new();
 }

@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sled::{
   transaction::{ConflictableTransactionResult, TransactionalTree},
   Transactional,
@@ -17,7 +17,6 @@ pub(crate) struct Entry<T> {
 }
 
 pub struct IdxStorage<T> {
-  db: sled::Db,
   entries: sled::Tree,
   idx: sled::Tree,
   _phantom: std::marker::PhantomData<T>,
@@ -29,7 +28,6 @@ impl<T: Serialize + DeserializeOwned> IdxStorage<T> {
     let entries = db.open_tree(ENTRIES)?;
     let idx = db.open_tree(IDX)?;
     Ok(Self {
-      db,
       entries,
       idx,
       _phantom: std::marker::PhantomData,
@@ -49,17 +47,19 @@ impl<T: Serialize + DeserializeOwned> IdxStorage<T> {
 
   pub fn set(&self, key: Uuid, value: &T) -> Result<()> {
     let entry = Entry {
-      value: value.clone(),
+      value,
       idx_key: Uuid::now_v7(),
     };
+
     let entry_bytes = bincode::serialize(&entry)?;
     let key_bytes = key.as_bytes();
 
-    self.transaction(move |(entries, idx)| {
-      entries.insert(key_bytes, entry_bytes)?;
+    self.transaction(|(entries, idx)| {
+      entries.insert(key_bytes, entry_bytes.as_slice())?;
       idx.insert(entry.idx_key.as_bytes(), key_bytes)?;
       Ok(())
     })?;
+
     Ok(())
   }
 
@@ -70,11 +70,13 @@ impl<T: Serialize + DeserializeOwned> IdxStorage<T> {
       Some(entry) => {
         let entry: Entry<T> = bincode::deserialize(&entry)?;
         let idx_key_bytes = entry.idx_key.as_bytes();
+
         self.transaction(|(entries, idx)| {
           entries.remove(key_bytes)?;
           idx.remove(idx_key_bytes)?;
           Ok(())
         })?;
+
         Ok(())
       }
       None => Ok(()),
