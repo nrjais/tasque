@@ -1,0 +1,6 @@
+[] Task api
+  [] Rest API
+    [] CRUD for tasks
+  [] Fetch tasks
+  [] Execute tasks
+  [] Report task status
